@@ -109,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
     const html = getEmailTemplate(type, recipientName || "there", data || {});
 
     const emailResponse = await resend.emails.send({
-      from: "CRM Notifications <onboarding@resend.dev>",
+      from: "LunarAI CRM <notifications@lunarai.agency>",
       to: [recipientEmail],
       subject: subject || `CRM Notification: ${type.replace("_", " ")}`,
       html,
