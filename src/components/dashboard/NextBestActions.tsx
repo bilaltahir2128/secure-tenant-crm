@@ -33,14 +33,14 @@ const categoryIcons: Record<string, React.ComponentType<{ className?: string }>>
 };
 
 const priorityStyles: Record<string, string> = {
-  high: 'border-l-destructive bg-destructive/5',
-  medium: 'border-l-warning bg-warning/5',
-  low: 'border-l-muted-foreground bg-muted/30',
+  high: 'border-l-destructive bg-gradient-to-r from-destructive/10 to-transparent',
+  medium: 'border-l-warning bg-gradient-to-r from-warning/10 to-transparent',
+  low: 'border-l-muted-foreground bg-gradient-to-r from-muted/50 to-transparent',
 };
 
 const priorityBadgeStyles: Record<string, string> = {
-  high: 'bg-destructive/10 text-destructive',
-  medium: 'bg-warning/10 text-warning',
+  high: 'bg-destructive/15 text-destructive',
+  medium: 'bg-warning/15 text-warning',
   low: 'bg-muted text-muted-foreground',
 };
 
@@ -85,15 +85,21 @@ export function NextBestActions() {
 
   if (!hasLoaded && !loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <div className="rounded-full bg-primary/10 p-3 mb-4">
-          <Sparkles className="h-6 w-6 text-primary" />
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <div className="relative mb-5">
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-accent blur-xl opacity-30 animate-pulse-slow" />
+          <div className="relative rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 p-4">
+            <Sparkles className="h-8 w-8 text-primary" />
+          </div>
         </div>
-        <h3 className="font-medium text-foreground mb-2">AI-Powered Insights</h3>
-        <p className="text-sm text-muted-foreground mb-4 max-w-[200px]">
+        <h3 className="font-semibold text-foreground mb-2">AI-Powered Insights</h3>
+        <p className="text-sm text-muted-foreground mb-5 max-w-[220px]">
           Get personalized action suggestions based on your CRM data
         </p>
-        <Button onClick={fetchSuggestions} size="sm">
+        <Button 
+          onClick={fetchSuggestions} 
+          className="bg-gradient-to-r from-primary to-accent hover:opacity-90 shadow-lg hover:shadow-glow transition-all duration-200"
+        >
           <Sparkles className="h-4 w-4 mr-2" />
           Generate Suggestions
         </Button>
@@ -105,12 +111,16 @@ export function NextBestActions() {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="p-3 rounded-lg border border-l-4">
+          <div 
+            key={i} 
+            className="p-4 rounded-xl border border-l-4 border-l-muted animate-pulse"
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
             <div className="flex items-start gap-3">
-              <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+              <div className="h-10 w-10 rounded-xl bg-muted" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
-                <div className="h-3 w-1/2 bg-muted animate-pulse rounded" />
+                <div className="h-4 w-3/4 bg-muted rounded-lg" />
+                <div className="h-3 w-1/2 bg-muted rounded-lg" />
               </div>
             </div>
           </div>
@@ -124,10 +134,12 @@ export function NextBestActions() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-6 text-center">
-        <AlertCircle className="h-8 w-8 text-destructive mb-2" />
-        <p className="text-sm text-muted-foreground mb-3">{error}</p>
-        <Button onClick={fetchSuggestions} size="sm" variant="outline">
+      <div className="flex flex-col items-center justify-center py-8 text-center">
+        <div className="rounded-2xl bg-destructive/10 p-4 mb-4">
+          <AlertCircle className="h-8 w-8 text-destructive" />
+        </div>
+        <p className="text-sm text-muted-foreground mb-4 max-w-[200px]">{error}</p>
+        <Button onClick={fetchSuggestions} size="sm" variant="outline" className="rounded-xl">
           <RefreshCw className="h-4 w-4 mr-2" />
           Try Again
         </Button>
@@ -137,10 +149,12 @@ export function NextBestActions() {
 
   if (suggestions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-6 text-center">
-        <CheckCircle2 className="h-8 w-8 text-success mb-2" />
+      <div className="flex flex-col items-center justify-center py-8 text-center">
+        <div className="rounded-2xl bg-success/10 p-4 mb-4">
+          <CheckCircle2 className="h-8 w-8 text-success" />
+        </div>
         <p className="text-sm text-muted-foreground">All caught up! No urgent actions needed.</p>
-        <Button onClick={fetchSuggestions} size="sm" variant="ghost" className="mt-2">
+        <Button onClick={fetchSuggestions} size="sm" variant="ghost" className="mt-3 rounded-xl">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -162,32 +176,35 @@ export function NextBestActions() {
             key={index}
             onClick={() => toggleExpand(index)}
             className={cn(
-              'p-3 rounded-lg border border-l-4 transition-all cursor-pointer hover:bg-accent/50',
+              'p-4 rounded-xl border border-l-4 transition-all duration-200 cursor-pointer',
+              'hover:shadow-md',
               priorityStyles[suggestion.priority] || priorityStyles.medium
             )}
+            style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="flex items-start gap-3">
-              <div className="rounded-full bg-background p-2 shadow-sm shrink-0">
+              <div className="rounded-xl bg-background/80 p-2.5 shadow-sm shrink-0 border border-border/30">
                 <Icon className="h-4 w-4 text-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-xs font-medium text-muted-foreground truncate">
                       {suggestion.target}
                     </span>
                     <span className={cn(
-                      'text-xs px-1.5 py-0.5 rounded-full capitalize',
+                      'text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize',
                       priorityBadgeStyles[suggestion.priority] || priorityBadgeStyles.medium
                     )}>
                       {suggestion.priority}
                     </span>
                   </div>
-                  {isExpanded ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-                  )}
+                  <div className={cn(
+                    "transition-transform duration-200",
+                    isExpanded && "rotate-180"
+                  )}>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </div>
                 </div>
                 <p className={cn(
                   "text-sm font-medium text-foreground transition-all",
@@ -196,7 +213,7 @@ export function NextBestActions() {
                   {suggestion.action}
                 </p>
                 <p className={cn(
-                  "text-xs text-muted-foreground mt-1 transition-all",
+                  "text-xs text-muted-foreground mt-1.5 transition-all",
                   !isExpanded && "line-clamp-1"
                 )}>
                   {suggestion.reason}
@@ -211,7 +228,7 @@ export function NextBestActions() {
         onClick={fetchSuggestions} 
         size="sm" 
         variant="ghost" 
-        className="w-full text-muted-foreground hover:text-foreground"
+        className="w-full text-muted-foreground hover:text-foreground rounded-xl"
       >
         <RefreshCw className="h-4 w-4 mr-2" />
         Refresh Suggestions
