@@ -6,8 +6,9 @@ import { PipelineChart } from '@/components/dashboard/PipelineChart';
 import { NextBestActions } from '@/components/dashboard/NextBestActions';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Target, DollarSign, TrendingUp } from 'lucide-react';
+import { Users, Target, DollarSign, TrendingUp, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 interface DashboardStats {
   totalContacts: number;
   totalDeals: number;
@@ -72,81 +73,126 @@ export default function Dashboard() {
     }).format(value);
   };
 
+  const firstName = profile?.full_name?.split(' ')[0] || 'User';
+  const currentHour = new Date().getHours();
+  const greeting = currentHour < 12 ? 'Good morning' : currentHour < 18 ? 'Good afternoon' : 'Good evening';
+
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Welcome back, {profile?.full_name?.split(' ')[0] || 'User'}
+      <div className="space-y-8 relative">
+        {/* Decorative background elements */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl -z-10 animate-pulse-slow" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-accent/5 blur-3xl -z-10 animate-pulse-slow" style={{ animationDelay: '2s' }} />
+
+        {/* Header with gradient text */}
+        <div className="animate-fade-in">
+          <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-2">
+            {greeting}
+          </p>
+          <h1 className="text-4xl font-bold tracking-tight">
+            Welcome back, <span className="gradient-text">{firstName}</span>
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-2 text-lg">
             Here's what's happening with your sales today.
           </p>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Grid with staggered animation */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="Total Contacts"
-            value={loading ? '—' : stats.totalContacts}
-            icon={Users}
-            iconClassName="bg-primary/10 text-primary"
-          />
-          <StatCard
-            title="Active Deals"
-            value={loading ? '—' : stats.totalDeals}
-            icon={Target}
-            iconClassName="bg-info/10 text-info"
-          />
-          <StatCard
-            title="Total Revenue"
-            value={loading ? '—' : formatCurrency(stats.totalRevenue)}
-            icon={DollarSign}
-            iconClassName="bg-success/10 text-success"
-          />
-          <StatCard
-            title="Win Rate"
-            value={loading ? '—' : `${stats.successRate}%`}
-            icon={TrendingUp}
-            iconClassName="bg-warning/10 text-warning"
-          />
+          <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+            <StatCard
+              title="Total Contacts"
+              value={loading ? '—' : stats.totalContacts.toLocaleString()}
+              icon={Users}
+              iconClassName="from-primary/30 to-primary/10 text-primary"
+              gradientFrom="from-primary/30"
+              gradientTo="to-primary/5"
+            />
+          </div>
+          <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
+            <StatCard
+              title="Active Deals"
+              value={loading ? '—' : stats.totalDeals.toLocaleString()}
+              icon={Target}
+              iconClassName="from-info/30 to-info/10 text-info"
+              gradientFrom="from-info/30"
+              gradientTo="to-info/5"
+            />
+          </div>
+          <div className="animate-slide-up" style={{ animationDelay: '300ms' }}>
+            <StatCard
+              title="Total Revenue"
+              value={loading ? '—' : formatCurrency(stats.totalRevenue)}
+              icon={DollarSign}
+              iconClassName="from-success/30 to-success/10 text-success"
+              gradientFrom="from-success/30"
+              gradientTo="to-success/5"
+            />
+          </div>
+          <div className="animate-slide-up" style={{ animationDelay: '400ms' }}>
+            <StatCard
+              title="Win Rate"
+              value={loading ? '—' : `${stats.successRate}%`}
+              icon={TrendingUp}
+              iconClassName="from-warning/30 to-warning/10 text-warning"
+              gradientFrom="from-warning/30"
+              gradientTo="to-warning/5"
+            />
+          </div>
         </div>
 
         {/* Charts and Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Pipeline Chart */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Sales Pipeline</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PipelineChart />
-            </CardContent>
-          </Card>
+          <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '500ms' }}>
+            <Card className="card-premium h-full">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-primary to-accent" />
+                  Sales Pipeline
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PipelineChart />
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Next Best Actions - AI Powered */}
-          <Card className="row-span-2">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                Next Best Actions
-                <span className="text-xs font-normal bg-primary/10 text-primary px-2 py-0.5 rounded-full">AI</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <NextBestActions />
-            </CardContent>
-          </Card>
+          <div className="row-span-2 animate-slide-up" style={{ animationDelay: '600ms' }}>
+            <Card className="card-premium h-full overflow-hidden">
+              <CardHeader className="pb-4 relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent blur-2xl" />
+                <CardTitle className="text-lg font-semibold flex items-center gap-2 relative z-10">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent">
+                    <Sparkles className="h-4 w-4 text-white" />
+                  </div>
+                  <span>Next Best Actions</span>
+                  <span className="text-[10px] font-bold tracking-widest bg-gradient-to-r from-primary to-accent text-white px-2 py-0.5 rounded-full uppercase">
+                    AI
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <NextBestActions />
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Recent Activity */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RecentActivities />
-            </CardContent>
-          </Card>
+          <div className="lg:col-span-2 animate-slide-up" style={{ animationDelay: '700ms' }}>
+            <Card className="card-premium h-full">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-info to-success" />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RecentActivities />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </DashboardLayout>
