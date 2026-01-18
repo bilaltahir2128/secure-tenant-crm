@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.next-best-action]
 verify_jwt = false
+
+[functions.generate-email-draft]
+verify_jwt = false
