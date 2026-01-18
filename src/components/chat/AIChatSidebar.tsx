@@ -294,7 +294,7 @@ export function AIChatSidebar() {
       {/* Chat Panel */}
       <div
         className={cn(
-          "fixed bottom-28 right-6 w-[400px] h-[500px] bg-card border rounded-xl shadow-2xl z-40",
+          "fixed bottom-24 right-6 w-[400px] h-[520px] bg-card border rounded-xl shadow-2xl z-40",
           "flex flex-col transition-all duration-300 ease-in-out overflow-hidden",
           isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
         )}
