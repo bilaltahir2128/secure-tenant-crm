@@ -3,11 +3,11 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { RecentActivities } from '@/components/dashboard/RecentActivities';
 import { PipelineChart } from '@/components/dashboard/PipelineChart';
+import { NextBestActions } from '@/components/dashboard/NextBestActions';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, Target, DollarSign, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
 interface DashboardStats {
   totalContacts: number;
   totalDeals: number;
@@ -125,8 +125,21 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
+          {/* Next Best Actions - AI Powered */}
+          <Card className="row-span-2">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                Next Best Actions
+                <span className="text-xs font-normal bg-primary/10 text-primary px-2 py-0.5 rounded-full">AI</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <NextBestActions />
+            </CardContent>
+          </Card>
+
           {/* Recent Activity */}
-          <Card>
+          <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
             </CardHeader>
