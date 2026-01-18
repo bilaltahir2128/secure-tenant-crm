@@ -320,10 +320,10 @@ export function AIChatSidebar() {
         {/* Messages - Scrollable Container */}
         <div 
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto p-4 space-y-4"
+          className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col"
         >
           {messages.length === 0 ? (
-            <div className="space-y-4 pt-4">
+            <div className="flex-1 flex flex-col justify-center space-y-4">
               <div className="text-center">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
                   <Bot className="h-6 w-6 text-primary" />
@@ -352,7 +352,7 @@ export function AIChatSidebar() {
               </div>
             </div>
           ) : (
-            <>
+            <div className="mt-auto space-y-4">
               {messages.map((msg, i) => (
                 <div
                   key={i}
@@ -396,7 +396,7 @@ export function AIChatSidebar() {
                   )}
                 </div>
               ))}
-            </>
+            </div>
           )}
         </div>
 
