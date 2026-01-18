@@ -8,19 +8,28 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Settings as SettingsIcon, Building2, Users, Shield, Bell, Palette, User, Mail, Phone, Crown, UserCog, UserCheck } from 'lucide-react';
+import { Building2, Users, Bell, User, Crown, UserCog, UserCheck, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { Tables } from '@/integrations/supabase/types';
+import type { Tables, Json } from '@/integrations/supabase/types';
+import { ChangePasswordDialog } from '@/components/settings/ChangePasswordDialog';
+import { InviteMemberDialog } from '@/components/settings/InviteMemberDialog';
+import { DeleteOrganizationDialog } from '@/components/settings/DeleteOrganizationDialog';
 
 type Profile = Tables<'profiles'>;
-type UserRole = Tables<'user_roles'>;
 type Tenant = Tables<'tenants'>;
 
 interface TeamMember extends Profile {
   role?: string;
+}
+
+interface NotificationSettings {
+  email_deals: boolean;
+  email_activities: boolean;
+  email_team: boolean;
+  browser_push: boolean;
 }
 
 const roleIcons: Record<string, React.ElementType> = {
@@ -35,6 +44,13 @@ const roleColors: Record<string, string> = {
   sales_agent: 'bg-green-100 text-green-700 border-green-200',
 };
 
+const defaultNotifications: NotificationSettings = {
+  email_deals: true,
+  email_activities: true,
+  email_team: false,
+  browser_push: true,
+};
+
 export default function Settings() {
   const { tenantId, profile, user, role } = useAuth();
   const { toast } = useToast();
@@ -42,6 +58,7 @@ export default function Settings() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingNotifications, setSavingNotifications] = useState(false);
 
   // Profile form
   const [profileForm, setProfileForm] = useState({
@@ -55,13 +72,8 @@ export default function Settings() {
     subdomain: '',
   });
 
-  // Notification settings
-  const [notifications, setNotifications] = useState({
-    email_deals: true,
-    email_activities: true,
-    email_team: false,
-    browser_push: true,
-  });
+  // Notification settings - load from tenant settings or localStorage
+  const [notifications, setNotifications] = useState<NotificationSettings>(defaultNotifications);
 
   useEffect(() => {
     if (tenantId && profile) {
@@ -87,11 +99,23 @@ export default function Settings() {
         name: tenantData.name || '',
         subdomain: tenantData.subdomain || '',
       });
+
+      // Load notification settings from tenant settings or use defaults
+      const settings = tenantData.settings as { notifications?: NotificationSettings } | null;
+      if (settings?.notifications) {
+        setNotifications(settings.notifications);
+      } else {
+        // Try localStorage as fallback
+        const savedNotifications = localStorage.getItem(`notifications_${tenantId}`);
+        if (savedNotifications) {
+          setNotifications(JSON.parse(savedNotifications));
+        }
+      }
     }
 
-    // Fetch team members with roles
+    // Fetch team members with roles (admins can see all, others see from profiles_public)
     const { data: profiles } = await supabase
-      .from('profiles')
+      .from('profiles_public')
       .select('*')
       .eq('tenant_id', tenantId);
 
@@ -103,8 +127,9 @@ export default function Settings() {
     if (profiles && roles) {
       const membersWithRoles = profiles.map(p => ({
         ...p,
+        email: p.user_id === user?.id ? profile?.email : '', // Only show own email
         role: roles.find(r => r.user_id === p.user_id)?.role || 'sales_agent',
-      }));
+      })) as TeamMember[];
       setTeamMembers(membersWithRoles);
     }
 
@@ -146,8 +171,45 @@ export default function Settings() {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Organization updated!' });
+      // Update local state
+      if (tenant) {
+        setTenant({ ...tenant, name: orgForm.name, subdomain: orgForm.subdomain });
+      }
     }
     setSaving(false);
+  };
+
+  const handleSaveNotifications = async () => {
+    setSavingNotifications(true);
+    
+    // Save to localStorage for now (could be extended to save to tenant settings)
+    localStorage.setItem(`notifications_${tenantId}`, JSON.stringify(notifications));
+    
+    // If admin, also save to tenant settings
+    if (role === 'admin' && tenantId) {
+      const currentSettings = (tenant?.settings as Record<string, unknown>) || {};
+      const notificationData = {
+        email_deals: notifications.email_deals,
+        email_activities: notifications.email_activities,
+        email_team: notifications.email_team,
+        browser_push: notifications.browser_push,
+      };
+      const { error } = await supabase
+        .from('tenants')
+        .update({
+          settings: { ...currentSettings, notifications: notificationData } as Json,
+        })
+        .eq('tenant_id', tenantId);
+
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        setSavingNotifications(false);
+        return;
+      }
+    }
+
+    toast({ title: 'Notification preferences saved!' });
+    setSavingNotifications(false);
   };
 
   const getInitials = (name: string | null) => {
@@ -255,9 +317,9 @@ export default function Settings() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Password</p>
-                    <p className="text-sm text-muted-foreground">Last changed 30 days ago</p>
+                    <p className="text-sm text-muted-foreground">Change your account password</p>
                   </div>
-                  <Button variant="outline">Change Password</Button>
+                  <ChangePasswordDialog />
                 </div>
                 <Separator />
                 <div className="flex items-center justify-between">
@@ -265,7 +327,10 @@ export default function Settings() {
                     <p className="font-medium">Two-Factor Authentication</p>
                     <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
                   </div>
-                  <Button variant="outline">Enable 2FA</Button>
+                  <Button variant="outline" disabled>
+                    <ShieldAlert className="h-4 w-4 mr-2" />
+                    Coming Soon
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -322,14 +387,15 @@ export default function Settings() {
                 <CardDescription>Irreversible actions</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
+                <div className="flex items-center justify-between p-4 border border-destructive/20 rounded-lg bg-destructive/5">
                   <div>
-                    <p className="font-medium text-red-700">Delete Organization</p>
-                    <p className="text-sm text-red-600">This will permanently delete all data</p>
+                    <p className="font-medium text-destructive">Delete Organization</p>
+                    <p className="text-sm text-destructive/80">This will permanently delete all data</p>
                   </div>
-                  <Button variant="destructive" disabled={!isAdmin}>
-                    Delete Organization
-                  </Button>
+                  <DeleteOrganizationDialog 
+                    organizationName={tenant?.name || ''} 
+                    disabled={!isAdmin} 
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -343,12 +409,7 @@ export default function Settings() {
                   <CardTitle>Team Members</CardTitle>
                   <CardDescription>{teamMembers.length} members in your organization</CardDescription>
                 </div>
-                {isAdmin && (
-                  <Button>
-                    <Users className="h-4 w-4 mr-2" />
-                    Invite Member
-                  </Button>
-                )}
+                {isAdmin && <InviteMemberDialog />}
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -367,7 +428,9 @@ export default function Settings() {
                           </Avatar>
                           <div>
                             <p className="font-medium">{member.full_name || 'Unknown'}</p>
-                            <p className="text-sm text-muted-foreground">{member.email}</p>
+                            {member.user_id === user?.id && (
+                              <p className="text-sm text-muted-foreground">{member.email}</p>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -495,7 +558,9 @@ export default function Settings() {
               </CardContent>
             </Card>
 
-            <Button>Save Notification Preferences</Button>
+            <Button onClick={handleSaveNotifications} disabled={savingNotifications}>
+              {savingNotifications ? 'Saving...' : 'Save Notification Preferences'}
+            </Button>
           </TabsContent>
         </Tabs>
       </div>
