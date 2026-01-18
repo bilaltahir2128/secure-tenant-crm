@@ -4,11 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Mail, Phone, Building2 } from 'lucide-react';
+import { Plus, Search, Mail, Phone, Building2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { z } from 'zod';
+import { EmailDraftDialog } from '@/components/contacts/EmailDraftDialog';
 
 // Zod schema for contact validation
 const contactSchema = z.object({
@@ -67,6 +68,8 @@ export default function Contacts() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [form, setForm] = useState<ContactFormData>({
     first_name: '',
     last_name: '',
@@ -134,6 +137,10 @@ export default function Contacts() {
     `${c.first_name} ${c.last_name} ${c.email} ${c.company}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleOpenEmailDialog = (contact: Contact) => {
+    setSelectedContact(contact);
+    setEmailDialogOpen(true);
+  };
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -235,18 +242,19 @@ export default function Contacts() {
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Company</th>
+                <th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-8 text-muted-foreground">
+                  <td colSpan={5} className="text-center py-8 text-muted-foreground">
                     Loading...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-8 text-muted-foreground">
+                  <td colSpan={5} className="text-center py-8 text-muted-foreground">
                     No contacts found
                   </td>
                 </tr>
@@ -268,12 +276,34 @@ export default function Contacts() {
                       <Building2 className="h-4 w-4 inline mr-2" />
                       {c.company || '—'}
                     </td>
+                    <td className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenEmailDialog(c)}
+                        title="Generate AI Email"
+                      >
+                        <Sparkles className="h-4 w-4 mr-1" />
+                        AI Email
+                      </Button>
+                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Email Draft Dialog */}
+        {selectedContact && (
+          <EmailDraftDialog
+            open={emailDialogOpen}
+            onOpenChange={setEmailDialogOpen}
+            contactId={selectedContact.contact_id}
+            contactName={`${selectedContact.first_name} ${selectedContact.last_name}`}
+            contactEmail={selectedContact.email}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
