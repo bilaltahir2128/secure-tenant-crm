@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Building2, Users, Bell, User, Crown, UserCog, UserCheck, ShieldAlert } from 'lucide-react';
+import { Building2, Users, Bell, User, Crown, UserCog, UserCheck, ShieldAlert, Send } from 'lucide-react';
+import { sendTestNotification } from '@/lib/notifications';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
@@ -59,6 +60,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingNotifications, setSavingNotifications] = useState(false);
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
 
   // Profile form
   const [profileForm, setProfileForm] = useState({
@@ -210,6 +212,26 @@ export default function Settings() {
 
     toast({ title: 'Notification preferences saved!' });
     setSavingNotifications(false);
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!profile?.email) {
+      toast({ title: 'Error', description: 'No email address found', variant: 'destructive' });
+      return;
+    }
+
+    setSendingTestEmail(true);
+    try {
+      await sendTestNotification(profile.email, profile.full_name || 'User');
+      toast({ 
+        title: 'Test email sent!', 
+        description: `Check your inbox at ${profile.email}` 
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send test email';
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
+    }
+    setSendingTestEmail(false);
   };
 
   const getInitials = (name: string | null) => {
@@ -554,6 +576,31 @@ export default function Settings() {
                     checked={notifications.browser_push}
                     onCheckedChange={(checked) => setNotifications({ ...notifications, browser_push: checked })}
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Test Email Notifications</CardTitle>
+                <CardDescription>Verify your email notification settings are working</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Send Test Email</p>
+                    <p className="text-sm text-muted-foreground">
+                      Send a test notification email to {profile?.email || 'your email'}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleSendTestEmail} 
+                    disabled={sendingTestEmail}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {sendingTestEmail ? 'Sending...' : 'Send Test'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
