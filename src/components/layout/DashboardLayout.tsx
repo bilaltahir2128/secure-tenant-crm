@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
+import { AIChatSidebar } from '@/components/chat/AIChatSidebar';
 import { useAuth } from '@/lib/auth';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -32,6 +33,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <main className="pl-64 min-h-screen">
         <div className="p-8">{children}</div>
       </main>
+      <AIChatSidebar />
     </div>
   );
 }
