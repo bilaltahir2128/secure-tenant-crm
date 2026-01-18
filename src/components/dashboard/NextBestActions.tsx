@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Sparkles, 
@@ -11,7 +10,9 @@ import {
   CheckCircle2, 
   Lightbulb,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -47,6 +48,7 @@ export function NextBestActions() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -105,10 +107,10 @@ export function NextBestActions() {
         {[1, 2, 3].map((i) => (
           <div key={i} className="p-3 rounded-lg border border-l-4">
             <div className="flex items-start gap-3">
-              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
               <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
+                <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+                <div className="h-3 w-1/2 bg-muted animate-pulse rounded" />
               </div>
             </div>
           </div>
@@ -146,38 +148,57 @@ export function NextBestActions() {
     );
   }
 
+  const toggleExpand = (index: number) => {
+    setExpandedIndex(expandedIndex === index ? null : index);
+  };
+
   return (
     <div className="space-y-3">
       {suggestions.slice(0, 5).map((suggestion, index) => {
         const Icon = categoryIcons[suggestion.category] || Lightbulb;
+        const isExpanded = expandedIndex === index;
         return (
           <div
             key={index}
+            onClick={() => toggleExpand(index)}
             className={cn(
-              'p-3 rounded-lg border border-l-4 transition-colors hover:bg-accent/50',
+              'p-3 rounded-lg border border-l-4 transition-all cursor-pointer hover:bg-accent/50',
               priorityStyles[suggestion.priority] || priorityStyles.medium
             )}
           >
             <div className="flex items-start gap-3">
-              <div className="rounded-full bg-background p-2 shadow-sm">
+              <div className="rounded-full bg-background p-2 shadow-sm shrink-0">
                 <Icon className="h-4 w-4 text-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {suggestion.target}
-                  </span>
-                  <span className={cn(
-                    'text-xs px-1.5 py-0.5 rounded-full capitalize',
-                    priorityBadgeStyles[suggestion.priority] || priorityBadgeStyles.medium
-                  )}>
-                    {suggestion.priority}
-                  </span>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {suggestion.target}
+                    </span>
+                    <span className={cn(
+                      'text-xs px-1.5 py-0.5 rounded-full capitalize',
+                      priorityBadgeStyles[suggestion.priority] || priorityBadgeStyles.medium
+                    )}>
+                      {suggestion.priority}
+                    </span>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                  )}
                 </div>
-                <p className="text-sm font-medium text-foreground line-clamp-2">
+                <p className={cn(
+                  "text-sm font-medium text-foreground transition-all",
+                  !isExpanded && "line-clamp-2"
+                )}>
                   {suggestion.action}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                <p className={cn(
+                  "text-xs text-muted-foreground mt-1 transition-all",
+                  !isExpanded && "line-clamp-1"
+                )}>
                   {suggestion.reason}
                 </p>
               </div>
